@@ -1,7 +1,6 @@
 import { eq, and } from 'drizzle-orm';
-import { drizzleClient } from './db.server';
-import { ttnIntegration } from './schema';
-// import { tottnIntegration } from './types';
+import { drizzleClient } from './db.server.js';
+import { ttnIntegration } from './schema/index.js';
 
 export const integrationsRepository = {
   async findByDeviceId(deviceId: string) {
