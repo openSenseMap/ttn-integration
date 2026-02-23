@@ -11,19 +11,16 @@ export const ttnIntegrationSchema = {
       devId: {
         type: "string",
         title: "Device ID",
-        description: "TTN device ID (dev_id)",
         minLength: 1,
       },
       appId: {
         type: "string",
         title: "Application ID",
-        description: "TTN application ID (app_id)",
         minLength: 1,
       },
       profile: {
         type: "string",
         title: "Decoder Profile",
-        description: "Profile used to decode the payload",
         enum: [
           "json",
           "debug",
@@ -36,16 +33,15 @@ export const ttnIntegrationSchema = {
       port: {
         type: "integer",
         title: "Port (optional)",
-        description: "TTN port number to filter messages. Leave empty to accept all ports.",
         minimum: 1,
         maximum: 223,
       },
       decodeOptions: {
         type: "array",
         title: "Decode Options",
-        description: "Configuration for decoding the payload based on selected profile",
         items: {
           type: "object",
+          required: ["sensor_id", "decoder"],
           properties: {
             sensor_id: {
               type: "string",
@@ -64,17 +60,38 @@ export const ttnIntegrationSchema = {
                 "unixtime",
               ],
             },
+            channel: {
+              type: "integer",
+              title: "Channel",
+            },
           },
         },
       },
+
     },
   },
   uiSchema: {
     "ui:order": ["enabled", "appId", "devId", "profile", "port", "decodeOptions"],
+    
+    appId: {
+      "ui:help": "TTN application ID (app_id)",
+    },
+    devId: {
+      "ui:help": "TTN device ID (dev_id)",
+    },
+    profile: {
+      "ui:help": "json: Direct JSON mapping | cayenne-lpp: Cayenne LPP format | sensebox/home: senseBox:home format | lora-serialization: Custom byte encoding | debug: Raw bytes",
+    },
+    port: {
+      "ui:help": "Leave empty to process messages from all ports",
+    },
     decodeOptions: {
-      "ui:help": "Required for lora-serialization and debug profiles. Defines how to decode the binary payload.",
-      "ui:collapsible": true,
-      "ui:collapsed": true,
+      "ui:help": "Configure how to decode the payload. Required for some profiles.",
+      "ui:options": {
+        orderable: false,
+        addable: true,
+        removable: true,
+      },
       items: {
         sensor_id: {
           "ui:help": "Select the sensor that will receive this decoded value",
@@ -82,13 +99,10 @@ export const ttnIntegrationSchema = {
         decoder: {
           "ui:help": "Type of decoder to use for this sensor's data",
         },
+        channel: {
+          "ui:widget": "hidden",
+        },
       },
-    },
-    port: {
-      "ui:help": "Leave empty to process messages from all ports",
-    },
-    profile: {
-      "ui:help": "json: Direct JSON mapping | cayenne-lpp: Cayenne LPP format | sensebox/home: senseBox:home format | lora-serialization: Custom byte encoding | debug: Raw bytes with byteMask",
     },
   },
 };

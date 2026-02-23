@@ -1,6 +1,6 @@
 import { logger } from "../logger.js";
 import { TtnIntegration } from "../schema/index.js";
-import type { DeviceWithIntegration, DecodedMeasurement } from "../types.js";
+import type { DecodedMeasurement } from "../types.js";
 
 /**
  * Decode pre-decoded JSON payload (from TTN payload function)

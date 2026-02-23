@@ -35,7 +35,7 @@ export async function decodeLoraserialization(
   base64Payload: string,
   integration: TtnIntegration,
   timestamp: Date,
-  sensors?: Array<{ _id: string; title: string; sensorType: string }> // Optional for tests
+  sensors?: Array<{ _id: string; title: string; sensorType: string }> 
 ): Promise<DecodedMeasurement[]> {
   const decodeOptions = integration.decodeOptions;
 
