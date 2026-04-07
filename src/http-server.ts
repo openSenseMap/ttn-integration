@@ -11,7 +11,7 @@ interface IntegrationRequest {
   devId: string;
   appId: string;
   profile: 'json' | 'debug' | 'sensebox/home' | 'lora-serialization' | 'cayenne-lpp';
-  port?: number;
+  port?: number | null;
   decodeOptions?: Array<{
     sensor_id?: string;
     sensor_title?: string;
@@ -32,11 +32,18 @@ function validateIntegrationRequest(body: any): { valid: boolean; errors?: strin
     errors.push('appId is required and must be a string');
   }
 
-  if (!body.profile || !['json', 'debug', 'sensebox/home', 'lora-serialization', 'cayenne-lpp'].includes(body.profile)) {
+  if (
+    !body.profile ||
+    !['json', 'debug', 'sensebox/home', 'lora-serialization', 'cayenne-lpp'].includes(body.profile)
+  ) {
     errors.push('profile must be one of: json, debug, sensebox/home, lora-serialization, cayenne-lpp');
   }
 
-  if (body.port !== undefined && (typeof body.port !== 'number' || body.port < 1 || body.port > 223)) {
+  if (
+    body.port !== undefined &&
+    body.port !== null &&
+    (typeof body.port !== 'number' || body.port < 1 || body.port > 223)
+  ) {
     errors.push('port must be a number between 1 and 223');
   }
 
@@ -140,6 +147,45 @@ export function createHttpServer(
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  app.post('/integrations/:deviceId/reconcile-sensors', requireServiceKey, async (req, res) => {
+    try {
+      const { deviceId } = req.params
+      const { validSensorIds } = req.body as { validSensorIds?: string[] }
+
+      if (!Array.isArray(validSensorIds)) {
+        return res.status(400).json({
+          error: 'validSensorIds must be an array',
+        })
+      }
+
+      const existing = await integrationsRepository.findByDeviceId(deviceId)
+
+      if (!existing) {
+        return res.status(404).json({ error: 'Integration not found' })
+      }
+
+      const previousDecodeOptions = existing.decodeOptions ?? []
+
+      const nextDecodeOptions = previousDecodeOptions.filter((option) => {
+        if (!option.sensor_id) return true
+        return validSensorIds.includes(option.sensor_id)
+      })
+
+      const updated = await integrationsRepository.update(deviceId, {
+        decodeOptions: nextDecodeOptions,
+      })
+
+      return res.json({
+        success: true,
+        removedCount: previousDecodeOptions.length - nextDecodeOptions.length,
+        integration: updated,
+      })
+    } catch (error) {
+      logger.error('Failed to reconcile sensors', { error })
+      return res.status(500).json({ error: 'Internal server error' })
+    }
+  })
 
   // GET TTN integration schema 
   app.get('/integrations/schema/ttn', requireServiceKey, (req, res) => {

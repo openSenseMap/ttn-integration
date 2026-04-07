@@ -31,7 +31,7 @@ export const ttnIntegrationSchema = {
         default: "json",
       },
       port: {
-        type: "integer",
+        type: ["integer", "null"],
         title: "Port (optional)",
         minimum: 1,
         maximum: 223,
@@ -84,6 +84,7 @@ export const ttnIntegrationSchema = {
     },
     port: {
       "ui:help": "Leave empty to process messages from all ports",
+      "ui:emptyValue": null,
     },
     decodeOptions: {
       "ui:help": "Configure how to decode the payload. Required for some profiles.",
