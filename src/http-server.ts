@@ -3,56 +3,16 @@ import { logger } from './logger.js';
 import { MessageProcessor } from './message-processor.js';
 import { ApiClient } from './api-client.js';
 import { config } from './config.js';
-import { integrationsRepository } from './integration.server.js';
+import {
+  integrationsRepository,
+  isTtnRouteConflictError,
+} from './integration.server.js';
 import type { TtnWebhookPayload } from './types.js';
 import { ttnIntegrationSchema } from './schema/ttn-schema.js';
-
-interface IntegrationRequest {
-  devId: string;
-  appId: string;
-  profile: 'json' | 'debug' | 'sensebox/home' | 'lora-serialization' | 'cayenne-lpp';
-  port?: number | null;
-  decodeOptions?: Array<{
-    sensor_id?: string;
-    sensor_title?: string;
-    sensor_type?: string;
-    decoder?: string;
-    [key: string]: any;
-  }>;
-}
-
-function validateIntegrationRequest(body: any): { valid: boolean; errors?: string[] } {
-  const errors: string[] = [];
-
-  if (!body.devId || typeof body.devId !== 'string') {
-    errors.push('devId is required and must be a string');
-  }
-
-  if (!body.appId || typeof body.appId !== 'string') {
-    errors.push('appId is required and must be a string');
-  }
-
-  if (
-    !body.profile ||
-    !['json', 'debug', 'sensebox/home', 'lora-serialization', 'cayenne-lpp'].includes(body.profile)
-  ) {
-    errors.push('profile must be one of: json, debug, sensebox/home, lora-serialization, cayenne-lpp');
-  }
-
-  if (
-    body.port !== undefined &&
-    body.port !== null &&
-    (typeof body.port !== 'number' || body.port < 1 || body.port > 223)
-  ) {
-    errors.push('port must be a number between 1 and 223');
-  }
-
-  if (body.decodeOptions !== undefined && !Array.isArray(body.decodeOptions)) {
-    errors.push('decodeOptions must be an array');
-  }
-
-  return errors.length > 0 ? { valid: false, errors } : { valid: true };
-}
+import {
+  normalizeIntegrationRequest,
+  validateIntegrationRequest,
+} from './validation/integration-request.js';
 
 export function createHttpServer(
   messageProcessor: MessageProcessor,
@@ -99,36 +59,29 @@ export function createHttpServer(
         });
       }
 
-      const data: IntegrationRequest = req.body;
+      const requestData = normalizeIntegrationRequest(req.body);
+      const integration = await integrationsRepository.upsert(deviceId, {
+        devId: requestData.devId,
+        appId: requestData.appId,
+        profile: requestData.profile,
+        port: requestData.port,
+        decodeOptions: requestData.decodeOptions,
+        enabled: true,
+      });
 
-      const existing = await integrationsRepository.findByDeviceId(deviceId);
-
-      let integration;
-      if (existing) {
-        integration = await integrationsRepository.update(deviceId, {
-          devId: data.devId,
-          appId: data.appId,
-          profile: data.profile,
-          port: data.port,
-          decodeOptions: data.decodeOptions,
-          enabled: true,
-        });
-        logger.info(`Updated TTN integration for device ${deviceId}`);
-      } else {
-        integration = await integrationsRepository.create({
-          deviceId: deviceId,
-          devId: data.devId,
-          appId: data.appId,
-          profile: data.profile,
-          port: data.port,
-          decodeOptions: data.decodeOptions,
-          enabled: true,
-        });
-        logger.info(`Created TTN integration for device ${deviceId}`);
-      }
-
+      logger.info(`Created or updated TTN integration for device ${deviceId}`);
       res.json(integration);
     } catch (error) {
+      if (isTtnRouteConflictError(error)) {
+        logger.warn('TTN route is already assigned to another device', {
+          deviceId: req.params.deviceId,
+        });
+        return res.status(409).json({
+          error: 'TTN route is already assigned to another device',
+          code: 'ttn_route_conflict',
+        });
+      }
+
       logger.error('Failed to create/update integration', { error });
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -237,6 +190,14 @@ export function createHttpServer(
       const ttnAppId = application_ids.application_id;
       const port = payload.uplink_message.f_port;
 
+      if (!Number.isInteger(port) || port < 1 || port > 223) {
+        logger.warn('Webhook contains an invalid f_port', { ttnDevId, port });
+        return res.status(422).json({
+          error:
+            'Malformed request: f_port must be an integer between 1 and 223',
+        });
+      }
+
       if (payloadDevId !== ttnDevId) {
         logger.warn('TTN device ID mismatch between URL and payload', {
           urlDevId: ttnDevId,
@@ -255,7 +216,7 @@ export function createHttpServer(
 
       // fetch integration config by ttn identity
       const integration =
-        await integrationsRepository.findByTtnDevice(ttnAppId, ttnDevId);
+        await integrationsRepository.findByTtnDevice(ttnAppId, ttnDevId, port);
 
       if (!integration) {
         logger.warn('Integration not found', { ttnAppId, ttnDevId });
@@ -276,22 +237,6 @@ export function createHttpServer(
       }
 
       const boxId = integration.deviceId; // osem device ID
-
-      // validate port
-      if (
-        integration.port !== null &&
-        integration.port !== undefined &&
-        integration.port !== port
-      ) {
-        logger.warn('Port mismatch', {
-          expected: integration.port,
-          received: port,
-          boxId,
-        });
-        return res.status(403).json({
-          error: `Port mismatch: expected ${integration.port}, received ${port}`,
-        });
-      }
 
       // decode payload
       logger.info(`🔧 Decoding payload`, {
