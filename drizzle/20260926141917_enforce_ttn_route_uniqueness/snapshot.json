@@ -1,0 +1,187 @@
+{
+  "version": "8",
+  "dialect": "postgres",
+  "id": "e48d0dea-6edd-4ad0-bab6-3aa525163e60",
+  "prevIds": [
+    "229c4959-e9e0-4d5f-8144-75dac7eb9041"
+  ],
+  "ddl": [
+    {
+      "values": [
+        "json",
+        "debug",
+        "sensebox/home",
+        "lora-serialization",
+        "cayenne-lpp"
+      ],
+      "name": "ttn_profile",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ttn_integration",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "device_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "dev_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "app_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "port",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "ttn_profile",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'json'",
+      "generated": null,
+      "identity": null,
+      "name": "profile",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "json",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "decode_options",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ttn_integration"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "ttn_integration_pkey",
+      "schema": "public",
+      "table": "ttn_integration",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "device_id"
+      ],
+      "nullsNotDistinct": false,
+      "name": "ttn_integration_device_id_unique",
+      "schema": "public",
+      "table": "ttn_integration",
+      "entityType": "uniques"
+    },
+    {
+      "value": "\"port\" IS NULL OR \"port\" BETWEEN 1 AND 223",
+      "name": "ttn_integration_port_range_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ttn_integration"
+    }
+  ],
+  "renames": []
+}
