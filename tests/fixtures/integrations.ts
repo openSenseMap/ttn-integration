@@ -96,8 +96,8 @@ export const debugIntegration = {
   appId: "debug-app",
   profile: "debug" as const,
   decodeOptions: [
-    { sensor_id: "588876b67dd004f79259bd8a", decoder: "0" },
-    { sensor_id: "588876b67dd004f79259bd8b", decoder: "1" },
-    { sensor_id: "588876b67dd004f79259bd8c", decoder: "2" },
+    { sensor_id: "588876b67dd004f79259bd8a", bytes: 1 },
+    { sensor_id: "588876b67dd004f79259bd8b", bytes: 1 },
+    { sensor_id: "588876b67dd004f79259bd8c", bytes: 1 },
   ],
 };
