@@ -13,6 +13,10 @@ import {
 	normalizeIntegrationRequest,
 	validateIntegrationRequest,
 } from './validation/integration-request.js'
+import {
+	serviceMetadata,
+	setServiceMetadataHeaders,
+} from './service-metadata.js'
 
 export function createHttpServer(
 	messageProcessor: MessageProcessor,
@@ -27,6 +31,10 @@ export function createHttpServer(
 			timestamp: new Date().toISOString(),
 			service: 'ttn-integration',
 		})
+	})
+
+	app.get('/meta', requireServiceKey, (_req, res) => {
+		res.json(serviceMetadata)
 	})
 
 	// GET integration config for device
@@ -323,5 +331,6 @@ export function requireServiceKey(req: any, res: any, next: any) {
 		})
 		return res.status(401).json({ error: 'Unauthorized' })
 	}
+	setServiceMetadataHeaders(res)
 	next()
 }
