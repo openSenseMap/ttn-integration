@@ -60,18 +60,20 @@ describe('decodeDebug', () => {
     ).rejects.toThrow("requires valid decodeOptions");
   });
 
-  it('should throw if byteMask indices out of range', async () => {
+  it('should stop when the payload has too few bytes for the next sensor', async () => {
     const integration = {
       ...debugIntegration,
       decodeOptions: [
-        { sensor_id: "id1", decoder: "0" },
-        { sensor_id: "id2", decoder: "10" }, // Index 10 doesn't exist
+        { sensor_id: "id1", bytes: 1 },
+        { sensor_id: "id2", bytes: 10 },
       ],
     };
 
     await expect(
       decodeDebug(validPayload, integration as any, timestamp)
-    ).rejects.toThrow();
+    ).resolves.toEqual([
+      { sensor_id: 'id1', value: 1, createdAt: timestamp },
+    ]);
   });
 
 //   it('should skip decodeOptions without sensor_id', async () => {
